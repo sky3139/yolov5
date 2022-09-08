@@ -1,0 +1,14 @@
+path: . # dataset root dir
+
+# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
+train: /home/data/599  # 118287 images
+val: /home/data/599  # 5000 images
+test: /home/data/599 # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794
+
+# Classes
+names:
+  0: person
+  1: bicycle
+  2: car
+  3: motorcycle
+
