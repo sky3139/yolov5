@@ -261,7 +261,7 @@ def run(
 
     # Print results
     pf = '%16s' + '%11i' * 2 + '%11.3g' * 4  # print format
-    print("mp %.2f mr %.2f map50 %.2f map %.2f" % (mp, mr, map50, map))
+    print("【MP:%.4f mr %.4f map50:%.4f map:%.4f" % (mp, mr, map50, map))
     if nt.sum() == 0:
         LOGGER.warning(f'WARNING: no labels found in {task} set, can not compute metrics without labels ⚠️')
 

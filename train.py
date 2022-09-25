@@ -22,7 +22,6 @@ import random
 import sys
 import time
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -31,7 +30,7 @@ import torch.distributed as dist
 import torch.nn as nn
 import yaml
 from torch.optim import lr_scheduler
-from tqdm import tqdm
+from datetime import datetime
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -272,10 +271,10 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         mloss = torch.zeros(3, device=device)  # mean losses
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
-        pbar = enumerate(train_loader)
-        print(('\n' + '%11s' * 7) % ('Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'Instances', 'Size'))
+        current_time = datetime.now().strftime('%H:%M:%S')[:-3]
+        print(('%s\n%s' + '%9s' * 6) % (current_time,'Epoch', 'GPU_mem', 'box_loss', 'obj_loss', 'cls_loss', 'Instances', 'Size'))
         optimizer.zero_grad()
-        for i, (imgs, targets, paths, _) in pbar:  # batch -------------------------------------------------------------
+        for i, (imgs, targets, paths, _) in enumerate(train_loader):  # batch -------------------------------------------------------------
             callbacks.run('on_train_batch_start')
             ni = i + nb * epoch  # number integrated batches (since train start)
             imgs = imgs.to(device, non_blocking=True).float() / 255  # uint8 to float32, 0-255 to 0.0-1.0
@@ -323,21 +322,22 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 last_opt_step = ni
 
             # Log
-            if RANK in {-1, 0} and i%2==0:
+            if RANK in {-1, 0} and i%20==0:
                 mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
                 mem = f'{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G'  # (GB)
-                print(('%11s' * 2 + '%11.4g' * 5) %
+                print(('%s  ' * 2 + '%10.4g' * 5) %
                                      (f'{epoch}/{epochs - 1}', mem, *mloss, targets.shape[0], imgs.shape[-1]))
                 callbacks.run('on_train_batch_end', model, ni, imgs, targets, paths)
                 if callbacks.stop_training:
                     return
             # end batch ------------------------------------------------------------------------------------------------
-
+        current_time = datetime.now().strftime('%H:%M:%S')[:-3]
+        print(f"now {current_time}")
         # Scheduler
         lr = [x['lr'] for x in optimizer.param_groups]  # for loggers
         scheduler.step()
 
-        if RANK in {-1, 0} and epoch%2==0:
+        if RANK in {-1, 0} and epoch%5==0:
             # mAP
             callbacks.run('on_train_epoch_end', epoch=epoch)
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
